@@ -290,9 +290,9 @@ vec3 calculate_scattering(
 	
 	// calculate and return the final color
 	return (
-			phase_ray * beta_ray * total_ray // rayleigh color
-	   		+ phase_mie * beta_mie * total_mie // mie
-			+ opt_i.x * beta_ambient // and ambient
+		phase_ray * beta_ray * total_ray // rayleigh color
+	   	+ phase_mie * beta_mie * total_mie // mie
+		+ opt_i.x * beta_ambient // and ambient
 	) * light_intensity + scene_color * opacity; // now make sure the background is rendered correctly
 }
 
@@ -404,12 +404,18 @@ vec4 render_scene(vec3 pos, vec3 dir, vec3 light_dir) {
 // to do something with it we need the camera vector (which is the ray direction) of the current pixel
 // this function calculates it
 vec3 get_camera_vector(vec2 resolution, vec2 coord) {
-	vec2 uv    = coord.xy / resolution - vec2(0.5);
-		 uv.x *= resolution.x / resolution.y;
+	
+	// convert the uv to -1 to 1
+	vec2 uv = coord.xy / resolution - vec2(0.5);
+	
+	// scale for aspect ratio
+	uv.x *= resolution.x / resolution.y;
 
+	// and normalize to get the correct ray
+	// the -1 here is for the angle of view
+	// this can be calculated from an actual angle, but that's not needed here
 	return normalize(vec3(uv.x, uv.y, -1.0));
 }
-
 
 // Finally, draw the atmosphere to screen
 // we first get the camera vector and position, as well as the light dir
@@ -432,6 +438,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 	float offset = (1.0 - cos(iTime / 2.0)) * ATMOS_RADIUS;
 	vec3 camera_position = vec3(0.0, PLANET_RADIUS + 1.0, offset);
 #endif
+
 	// get the light direction
 	// also base this on the mouse position, that way the time of day can be changed with the mouse
 	vec3 light_dir = iMouse.y == 0.0 ? 
