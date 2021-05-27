@@ -1,4 +1,4 @@
-*standalone atmosphere*
+# standalone atmosphere
 
 A standalone atmosphere shader for SHADERed and shadertoy (https://www.shadertoy.com/view/wlBXWK)
 
