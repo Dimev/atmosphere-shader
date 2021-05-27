@@ -363,13 +363,14 @@ vec4 render_scene(vec3 pos, vec3 dir, vec3 light_dir) {
 	vec4 color = vec4(0.0, 0.0, 0.0, 1e12);
 	
 	// add a sun, if the angle between the ray direction and the light direction is small enough, color the pixels white
-	color.xyz = vec3(dot(dir, light_dir) > 0.9998 ? 3.0 : 0.0);
+	color.xyz = vec3(dot(dir, light_dir) > 0.9998 ? 40.0 : 0.0);
 	
 	// get where the ray intersects the planet
 	vec2 planet_intersect = ray_sphere_intersect(pos - PLANET_POS, dir, PLANET_RADIUS); 
 	
 	// if the ray hit the planet, set the max distance to that ray
 	if (0.0 < planet_intersect.y) {
+		
 		color.w = max(planet_intersect.x, 0.0);
 		
 		// sample position, where the pixel is
