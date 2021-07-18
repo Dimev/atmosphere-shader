@@ -103,6 +103,19 @@ Note: 	Because rayleigh is a long word to type, I use ray instead on most variab
 // camera mode, 0 is on the ground, 1 is in space, 2 is moving, 3 is moving from ground to space
 #define CAMERA_MODE 2
 
+// first off, we'll need to calculate the optical depth
+// this is effectively how much air is in the way from the camera ray to the object
+// we can calculate this as the integral over beta * exp(-scale_height * (sqrt(t^2 + 2bx + c) - planet_radius), from t = 0 to infinity 
+// with t as the distance from the start position, b = dot(ray direction, ray start) and c = dot(ray start, ray start) - planet radius
+// we can do it to infinity, because if we calculate the same at the object pos and subtract it from the one at the camera pos, we get the same result
+// this is also needed because we can't get the exact integral of this, so an approximation is needed
+float get_optical_depth(float b, float c, float beta, float scale_height) {
+
+	// if we graph this, it comes close to 1 / b + 2
+	return 1.0 / (b + 2.0);
+
+}
+
 // Next we'll define the main scattering function.
 // This traces a ray from start to end and takes a certain amount of samples along this ray, in order to calculate the color.
 // For every sample, we'll also trace a ray in the direction of the light, 
