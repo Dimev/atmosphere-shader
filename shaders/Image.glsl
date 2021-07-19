@@ -105,14 +105,79 @@ Note: 	Because rayleigh is a long word to type, I use ray instead on most variab
 
 // first off, we'll need to calculate the optical depth
 // this is effectively how much air is in the way from the camera ray to the object
-// we can calculate this as the integral over beta * exp(-scale_height * (sqrt(t^2 + 2bx + c) - planet_radius), from t = 0 to infinity 
-// with t as the distance from the start position, b = dot(ray direction, ray start) and c = dot(ray start, ray start) - planet radius
+// we can calculate this as the integral over beta * exp(-scale_height * (sqrt(t^2 + 2bt + c) - planet_radius), from t = 0 to infinity 
+// with t as the distance from the start position, b = dot(ray direction, ray start) and c = dot(ray start, ray start) - planet radius^2
 // we can do it to infinity, because if we calculate the same at the object pos and subtract it from the one at the camera pos, we get the same result
 // this is also needed because we can't get the exact integral of this, so an approximation is needed
-float get_optical_depth(float b, float c, float beta, float scale_height) {
+float get_optical_depth(float b, float c, float scale_height) {
 
 	// if we graph this, it comes close to 1 / b + 2
+	// this is obv wrong for now
+	// TODO linear or symbolic regression
 	return 1.0 / (b + 2.0);
+
+}
+
+// now, we also want the full single scattering
+// we're gonna use 3 channels, and this calculates scattering for one channel, and takes the absorption of the 3 into account
+// single scattering happens when light hits a particle in the atmosphere, and changes direction to go straight to the camera
+// the light is first attenuated by the air in the way from the light source (sun in this case) to the particle
+// attenuation means that the light is blocked, which can be calculated with exp(-optical depth light to particle)
+// after the light is scattered, it's attenuated again from the particle position to the light 
+// multiplying with the beta can be done after the total scattering and attenuation is not calculated in this function
+// it's also possible for the amount of light that is scattered to differ depending on the angle of the camera view ray and the light direction
+// this amount of light scattered is described as the phase function, which can also be done after the total scattering is done, so this is also not done in this function
+vec3 get_single_scattering(float b, float c) {
+
+	return vec3(0.0);
+
+}
+
+// the total scattering function
+vec4 total_scattering(
+	vec3 start, // start position of the ray
+	vec3 dir, // direction of the ray
+	float max_dist, // length of the ray, -1 if infinite
+	float planet_radius, // planet radius
+	float scale_height_a, // scale height for the first scattering type
+	float scale_height_b, // scale height for the second scattering type
+	float scale_height_c, // scale height for the third scattering type
+	vec3 scattering_beta_a, // scattering beta (how much light it scatters) for the first scattering type
+	vec3 scattering_beta_b, // scattering beta (how much light it scatters) for the second scattering type
+	vec3 scattering_beta_c, // scattering beta (how much light it scatters) for the third scattering type
+	vec3 absorption_beta_a, // absorption beta (how much light it takes away) for the first scattering type, added to the scattering
+	vec3 absorption_beta_b, // absorption beta (how much light it takes away) for the second scattering type, added to the scattering
+	vec3 absorption_beta_c, // absorption beta (how much light it takes away) for the third scattering type, added to the scattering
+) {
+
+	// calculate b and c for the start of the ray
+	float start_b = dot(start, dir);
+	float start_c = dot(start, start) - (planet_radius * planet_radius);
+
+	// and for the end of the ray
+	float end_b = dot(start + dir * max_dist, dir);
+	float end_c = dot(start + dir * max_dist, start + dir * max_dist) - (planet_radius * planet_radius);
+
+	// and calculate the halfway point, where the ray is closest to the planet
+	float halfway = length(start) * dot(normalize(start), dir); 
+
+	// now, calculate the optical depth for the entire ray
+	// we'll use the functions we made earlier for this
+	vec3 optical_depth = (
+		get_optical_depth(start_b, start_c, scale_height_a) * (scattering_beta_a + absorption_beta_a)
+		+ get_optical_depth(start_b, start_c, scale_height_b) * (scattering_beta_b + absorption_beta_b)
+		+ get_optical_depth(start_b, start_c, scale_height_c) * (scattering_beta_c + absorption_beta_c)
+	) - (max_dist < 0.0 : vec3(0.0) : ( // we don't need to subtract the rest of the ray from the end position, so that we only get the segment we want
+		get_optical_depth(end_b, end_c, scale_height_a) * (scattering_beta_a + absorption_beta_a)
+		+ get_optical_depth(end_b, end_c, scale_height_b) * (scattering_beta_b + absorption_beta_b)
+		+ get_optical_depth(end_b, end_c, scale_height_c) * (scattering_beta_c + absorption_beta_c)
+	));
+
+	// next up, get the attenuation for the segment
+	vec3 atmosphere_attn = exp(-optical_depth);
+
+	// and return the final color
+	return vec4(optical_depth, atmosphere_attn);
 
 }
 
