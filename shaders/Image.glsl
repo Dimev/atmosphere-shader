@@ -105,12 +105,12 @@ Note: 	Because rayleigh is a long word to type, I use ray instead on most variab
 
 // first off, we'll need to calculate the optical depth
 // this is effectively how much air is in the way from the camera ray to the object
-// we can calculate this as the integral over beta * exp(-scale_height * (sqrt(t^2 + 2bt + c) - planet_radius), from t = 0 to infinity 
-// with t as the distance from the start position, b = dot(ray direction, ray start) and c = dot(ray start, ray start) - planet radius^2
+// we can calculate this as the integral over beta * exp(-scale_height * (sqrt(t^2 + 2bt + c) - planet_radius)), from t = 0 to infinity 
+// with t as the distance from the start position, b = dot(ray direction, ray start) and c = dot(ray start, ray start) - planet radius * planet_radius
 // due to the multiplication by constant rule, we can keep beta outside of the integral
 // we can do it to infinity, because if we calculate the same at the object pos and subtract it from the one at the camera pos, we get the same result
 // this is also needed because we can't get the exact integral of this, so an approximation is needed
-float get_optical_depth(float b, float c, float scale_height, planet_radius) {
+float get_optical_depth(float b, float c, float scale_height, float planet_radius) {
 
 	// if we graph this, it comes close to 1 / b + 2
 	// this is obv wrong for now
@@ -148,7 +148,7 @@ vec4 total_scattering(
 	vec3 scattering_beta_c, // scattering beta (how much light it scatters) for the third scattering type
 	vec3 absorption_beta_a, // absorption beta (how much light it takes away) for the first scattering type, added to the scattering
 	vec3 absorption_beta_b, // absorption beta (how much light it takes away) for the second scattering type, added to the scattering
-	vec3 absorption_beta_c, // absorption beta (how much light it takes away) for the third scattering type, added to the scattering
+	vec3 absorption_beta_c // absorption beta (how much light it takes away) for the third scattering type, added to the scattering
 ) {
 
 	// calculate b and c for the start of the ray
@@ -168,7 +168,7 @@ vec4 total_scattering(
 		get_optical_depth(start_b, start_c, scale_height_a, planet_radius) * (scattering_beta_a + absorption_beta_a)
 		+ get_optical_depth(start_b, start_c, scale_height_b, planet_radius) * (scattering_beta_b + absorption_beta_b)
 		+ get_optical_depth(start_b, start_c, scale_height_c, planet_radius) * (scattering_beta_c + absorption_beta_c)
-	) - (max_dist < 0.0 : vec3(0.0) : ( // we don't need to subtract the rest of the ray from the end position, so that we only get the segment we want
+	) - (max_dist < 0.0 ? vec3(0.0) : ( // we don't need to subtract the rest of the ray from the end position, so that we only get the segment we want
 		get_optical_depth(end_b, end_c, scale_height_a, planet_radius) * (scattering_beta_a + absorption_beta_a)
 		+ get_optical_depth(end_b, end_c, scale_height_b, planet_radius) * (scattering_beta_b + absorption_beta_b)
 		+ get_optical_depth(end_b, end_c, scale_height_c, planet_radius) * (scattering_beta_c + absorption_beta_c)
@@ -291,7 +291,7 @@ vec3 calculate_scattering(
 		
 		// Add these densities to the optical depth, so that we know how many particles are on this ray.
 		// max here is needed to prevent opt_i from potentially becoming negative
-		opt_i += max(density + (prev_density - density) * 0.5, 0.0);
+		opt_i += density;
 		
 		// and update the previous density
 		prev_density = density;
@@ -341,7 +341,7 @@ vec3 calculate_scattering(
 			density_l *= step_size_l;
 			
 			// and add it to the total optical depth
-			opt_l += max(density_l + (prev_density_l - density_l) * 0.5, 0.0);
+			opt_l += density_l;
 			
 			// and update the previous density
 			prev_density_l = density_l;
