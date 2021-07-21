@@ -110,7 +110,7 @@ Note: 	Because rayleigh is a long word to type, I use ray instead on most variab
 // due to the multiplication by constant rule, we can keep beta outside of the integral
 // we can do it to infinity, because if we calculate the same at the object pos and subtract it from the one at the camera pos, we get the same result
 // this is also needed because we can't get the exact integral of this, so an approximation is needed
-float get_optical_depth(float b, float c, float scale_height, float planet_radius) {
+float get_optical_depth(float b, float c, float inv_scale_height, float planet_radius) {
 
 	// if we graph this, it comes close to 1 / b + 2
 	// this is obv wrong for now
@@ -165,13 +165,13 @@ vec4 total_scattering(
 	// now, calculate the optical depth for the entire ray
 	// we'll use the functions we made earlier for this
 	vec3 optical_depth = (
-		get_optical_depth(start_b, start_c, scale_height_a, planet_radius) * (scattering_beta_a + absorption_beta_a)
-		+ get_optical_depth(start_b, start_c, scale_height_b, planet_radius) * (scattering_beta_b + absorption_beta_b)
-		+ get_optical_depth(start_b, start_c, scale_height_c, planet_radius) * (scattering_beta_c + absorption_beta_c)
+		get_optical_depth(start_b, start_c, 1.0 / scale_height_a, planet_radius) * (scattering_beta_a + absorption_beta_a)
+		+ get_optical_depth(start_b, start_c, 1.0 / scale_height_b, planet_radius) * (scattering_beta_b + absorption_beta_b)
+		+ get_optical_depth(start_b, start_c, 1.0 / scale_height_c, planet_radius) * (scattering_beta_c + absorption_beta_c)
 	) - (max_dist < 0.0 ? vec3(0.0) : ( // we don't need to subtract the rest of the ray from the end position, so that we only get the segment we want
-		get_optical_depth(end_b, end_c, scale_height_a, planet_radius) * (scattering_beta_a + absorption_beta_a)
-		+ get_optical_depth(end_b, end_c, scale_height_b, planet_radius) * (scattering_beta_b + absorption_beta_b)
-		+ get_optical_depth(end_b, end_c, scale_height_c, planet_radius) * (scattering_beta_c + absorption_beta_c)
+		get_optical_depth(end_b, end_c, 1.0 / scale_height_a, planet_radius) * (scattering_beta_a + absorption_beta_a)
+		+ get_optical_depth(end_b, end_c, 1.0 / scale_height_b, planet_radius) * (scattering_beta_b + absorption_beta_b)
+		+ get_optical_depth(end_b, end_c, 1.0 / scale_height_c, planet_radius) * (scattering_beta_c + absorption_beta_c)
 	));
 
 	// next up, get the attenuation for the segment

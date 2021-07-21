@@ -9,10 +9,10 @@ import gplearn.genetic
 # beta can be left out
 # to actually do anything with it, we first want to have this formula to make some data with it
 # so set it up here
-def optical_depth(b, c, scale_height, planet_radius):
+def optical_depth(b, c, inv_scale_height, planet_radius):
 
 	# the density function along the ray
-	density = lambda t: np.exp(-scale_height * (np.sqrt(t * t + 2.0 * b * t + c) - planet_radius))
+	density = lambda t: np.exp(-inv_scale_height * (np.sqrt(t * t + 2.0 * b * t + c) - planet_radius))
 
 	# get the integral, 0 to infinity
 	return scipy.integrate.quad(density, 0.0, np.inf)
