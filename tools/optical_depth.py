@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.integrate
 import math
+import gplearn.genetic
 
 # we want to figure out a good approximation to the optical depth integral 
 # we can calculate this as the integral over beta * exp(-scale_height * (sqrt(t^2 + 2bt + c) - planet_radius)), from t = 0 to infinity 
@@ -22,19 +23,29 @@ i = 0
 
 data = []
 
+print("making data")
+
 # loop over all possible points
 # b is basically -inf to inf
 # c is - planet_radius^2 to inf
 # scale height is can be -inf to inf, but more realistically 0 to inf
 # planet radius is 0 to inf
-# for inf, we'll just use 1e6
+# for inf, we'll just use 10
 # big enough
+# well kinda, otherwise we get to some very high values
 for b in np.arange(-10, 10, 1):
 	for c in np.arange(-10, 10, 1):
-		for scale_height in np.arange(0.0, 10, 1):
-			for planet_radius in np.arange(0.0, 10, 1):
+		for scale_height in np.arange(0.01, 1.0, 0.1):
+			for planet_radius in np.arange(1.0, 11, 1):
 
-				# TODO: skip when the inside of the sqrt can become smaller than 0
+				# skip when the inside of the sqrt can become smaller than 0
+				# t^2 + 2bt + c, derivative is 2t + 2b, is 0 (aka min) when t = -b
+				# so min is b^2 + 2b*-b + c = c - b^2
+				min_val = c - b*b
+
+				if min_val < 0.0:
+
+					continue
 
 				val = optical_depth(b, c, scale_height, planet_radius)[0]
 
@@ -43,6 +54,21 @@ for b in np.arange(-10, 10, 1):
 					data.append((b, c, scale_height, planet_radius, val))
 
 print(len(data))
+print("training")
+
+x_train = [(x[0], x[1], x[2], x[3]) for x in data]
+y_train = [x[4] for x in data]
+
+# and estimate
+est_gp = gplearn.genetic.SymbolicRegressor(population_size=5000,
+                           generations=20, stopping_criteria=0.01,
+                           p_crossover=0.7, p_subtree_mutation=0.1,
+                           p_hoist_mutation=0.05, p_point_mutation=0.1,
+                           max_samples=0.9, verbose=1,
+                           parsimony_coefficient=0.01, random_state=0)
+est_gp.fit(x_train, y_train)
+
+print(est_gp._program)
 
 
 
