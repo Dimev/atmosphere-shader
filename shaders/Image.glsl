@@ -112,6 +112,14 @@ Note: 	Because rayleigh is a long word to type, I use ray instead on most variab
 // this is also needed because we can't get the exact integral of this, so an approximation is needed
 float get_optical_depth(float b, float c, float inv_scale_height, float planet_radius) {
 
+	// here's the derivation process:
+	// plot the formula
+	// look at what it looks like from 
+	// for the planet radius this is exp(x)
+
+	// this means the integral can be reduced to 0-infinity exp(-sqrt(t^2+2bt+c)) dt * scaling factor
+	// with the scaling factor being exp(scale_height) * ...?
+
 	// if we graph this, it comes close to 1 / b + 2
 	// this is obv wrong for now
 	// TODO linear or symbolic regression
