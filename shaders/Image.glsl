@@ -110,6 +110,15 @@ Note: 	Because rayleigh is a long word to type, I use ray instead on most variab
 // due to the multiplication by constant rule, we can keep beta outside of the integral
 // we can do it to infinity, because if we calculate the same at the object pos and subtract it from the one at the camera pos, we get the same result
 // this is also needed because we can't get the exact integral of this, so an approximation is needed
+
+// TODO: maybe use approximation with height and zenith cos angle instead
+// We first need to get the density of the atmosphere at a certain point
+// we can calculate this along a point on the ray
+// for that, we need the height along the ray first
+// which is h(x, a, t) = sqrt((start_height + t * a)^2 + (t*sin(cos^-1(a)))^2)
+// if we then put that inside an integral, we get exp(-g * (h(x, a, t) - p)) dt
+// this has a scale factor of exp(0.7 * p), NO WRONG
+// for either end it's ((2 - ) exp(-g*x)) / g
 float get_optical_depth(float b, float c, float inv_scale_height, float planet_radius) {
 
 	// here's the derivation process:
