@@ -134,6 +134,13 @@ float get_optical_depth(float b, float c, float inv_scale_height, float planet_r
 	// TODO linear or symbolic regression
 	return 1.0 / (b + 2.0);
 
+	// OTHER DERIVATION
+	// we can approximate exp(-x) with (1-x)^2, which results in x^2-2x+1
+	// this then expands to x^2 + 2bx + c - 2sqrt(x^2 + 2bx + c) + 1
+	// the integral of this is 1/3x^3 + bx^2 + cx - (c - b^2) * ln(sqrt(2bx + c + x^2) + b + x) + (b + x) * sqrt(2bx + c + x^2) + x
+	// r\left(x,\ c,\ b\right)=\frac{1}{3}x^{3}+2bx^{2}+cx-\left(c-b^{2}\right)\ln\left(\left(\sqrt{2bx+c+x^{2}}\right)+b+x\right)+\left(b+x\right)\sqrt{2bx+c+x^{2}}+x
+	// doesn't seem to work?
+
 }
 
 // now, we also want the full single scattering

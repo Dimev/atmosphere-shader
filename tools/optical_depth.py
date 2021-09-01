@@ -12,7 +12,7 @@ import gplearn.genetic
 def optical_depth(b, c, inv_scale_height, planet_radius):
 
 	# the density function along the ray
-	density = lambda t: np.exp(-inv_scale_height * (np.sqrt(t * t + 2.0 * b * t + c) - planet_radius))
+	density = lambda t: np.exp(-inv_scale_height * (np.sqrt((t * t) + (2.0 * b * t) + c) - planet_radius))
 
 	# get the integral, 0 to infinity
 	return scipy.integrate.quad(density, 0.0, np.inf)
@@ -33,34 +33,34 @@ print("making data")
 # for inf, we'll just use 10
 # big enough
 # well kinda, otherwise we get to some very high values
-for b in np.arange(-10, 10, 1):
-	for c in np.arange(-10, 10, 1):
-		for scale_height in np.arange(0.01, 1.0, 0.1):
-			for planet_radius in np.arange(1.0, 11, 1):
+for b in np.arange(-10, 20, 0.1):
+	for c in np.arange(-10, 20, 0.1):
+		#for scale_height in np.arange(0.01, 1.0, 0.1):
+			#for planet_radius in np.arange(1.0, 11, 1):
 
-				# skip when the inside of the sqrt can become smaller than 0
-				# t^2 + 2bt + c, derivative is 2t + 2b, is 0 (aka min) when t = -b
-				# so min is b^2 + 2b*-b + c = c - b^2
-				min_val = c - b*b
+		# skip when the inside of the sqrt can become smaller than 0
+		# t^2 + 2bt + c, derivative is 2t + 2b, is 0 (aka min) when t = -b
+		# so min is b^2 + 2b*-b + c = c - b^2
+		min_val = c - b*b
 
-				if min_val < 0.0:
+		if min_val < 0.0:
 
-					continue
+			continue
 
-				val = optical_depth(b, c, scale_height, planet_radius)[0]
+		val = optical_depth(b, c, 1.0, 0.0)[0]
 
-				if not math.isnan(val):
+		if not math.isnan(val):
 
-					data.append((b, c, scale_height, planet_radius, val))
+			data.append((b, c, val))
 
 print(len(data))
 print("training")
 
-x_train = [(x[0], x[1], x[2], x[3]) for x in data]
-y_train = [x[4] for x in data]
+x_train = [(x[0], x[1]) for x in data]
+y_train = [x[2] for x in data]
 
 # and estimate
-est_gp = gplearn.genetic.SymbolicRegressor(population_size=5000,
+est_gp = gplearn.genetic.SymbolicRegressor(population_size=1000,
                            generations=20, stopping_criteria=0.01,
                            p_crossover=0.7, p_subtree_mutation=0.1,
                            p_hoist_mutation=0.05, p_point_mutation=0.1,
